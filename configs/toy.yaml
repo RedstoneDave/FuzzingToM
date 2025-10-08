@@ -1,0 +1,8 @@
+agent: heuristic
+L_max: 160
+seed: 0
+dataset:
+  train: data/toy/train.jsonl
+  dev: data/toy/dev.jsonl
+  test: data/toy/test.jsonl
+output_dir: outputs/toy_run

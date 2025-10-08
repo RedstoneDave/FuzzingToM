@@ -1,0 +1,10 @@
+agent: llm
+L_max: 180
+seed: 0
+llm:
+  provider: openai
+  model: gpt-4o-mini
+  temperature: 0.1
+dataset:
+  test: data/in3/proactest_test.jsonl
+output_dir: outputs/in3_openai

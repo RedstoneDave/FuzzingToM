@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "proactest"
+version = "0.2.0"
+description = "Gold-free evaluation for proactive dialog via metamorphic testing & greybox harness"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{name="Teng Tu"}, {name="Xuan Zhang"}]
+dependencies = [
+  "tqdm>=4.66.0",
+  "pyyaml>=6.0.1",
+  "pydantic>=2.7.0",
+  "pandas>=2.1.0"
+]
+
+[project.optional-dependencies]
+llm = ["openai>=1.30.0", "anthropic>=0.33.0", "mistralai>=0.4.0", "httpx>=0.27.0"]
+viz = ["plotly>=5.20.0", "streamlit>=1.33.0"]
+hf = ["datasets>=2.20.0"]
+
+[project.scripts]
+proactest = "proactest.cli:main"
+proactest-make-toy = "scripts.make_toy_dataset:main"
+proactest-download-in3 = "scripts.download_in3:main"
+proactest-convert-in3 = "scripts.convert_in3_to_proactest:main"
