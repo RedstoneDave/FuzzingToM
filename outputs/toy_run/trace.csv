@@ -1,0 +1,7 @@
+conversation_id,turn_index,b,a,n_missing,m_known
+toy-004,0,1,"To proceed, could you clarify: origin?; date?",2,0
+toy-005,0,1,"To proceed, could you clarify: budget?",1,0
+toy-006,0,1,"To proceed, could you clarify: origin?; date?",2,0
+toy-007,0,1,"To proceed, could you clarify: budget?",1,0
+toy-008,0,1,"To proceed, could you clarify: origin?; date?",2,0
+toy-009,0,1,"To proceed, could you clarify: budget?",1,0

@@ -1,6 +1,5 @@
 from __future__ import annotations
-from typing import Tuple, Optional, List
-from ..types import TestCase
+from typing import Tuple, Optional, List, Dict, Any
 from .base import BaseAgent
 from ..llms.base import Message
 from ..llms.openai_client import OpenAIClient
@@ -20,9 +19,10 @@ class LLMAgent(BaseAgent):
         else: raise ValueError(f"Unknown provider: {provider}")
         self.temperature = temperature
 
-    def decide_and_ask(self, tc: TestCase) -> Tuple[int, Optional[str]]:
-        convo_text = "\n".join(f"{x['role']}: {x['text']}" for x in tc.conversation) if isinstance(tc.conversation, list) else str(tc.conversation)
-        unresolved = ", ".join(tc.unresolved_items)
+    def decide_and_ask(self, tc: Dict[str, Any]) -> Tuple[int, Optional[str]]:
+        convo_text = str(tc.get("conversation", ""))
+        unresolved_items = tc.get("unresolved_items", [])
+        unresolved = ", ".join(unresolved_items)
         user = f"Conversation so far:\n{convo_text}\n\nUnresolved slots: {unresolved}\nReturn JSON only."
         messages: List[Message] = [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": user}]
         out = self.client.chat(messages, temperature=self.temperature)
@@ -34,6 +34,6 @@ class LLMAgent(BaseAgent):
             a = (obj.get("a") or None) if b else None
             return (1 if b else 0), a
         except Exception:
-            if tc.unresolved_items:
-                return 1, "Could you clarify: " + "; ".join(tc.unresolved_items) + "?"
+            if unresolved_items:
+                return 1, "Could you clarify: " + "; ".join(unresolved_items) + "?"
             return 0, None

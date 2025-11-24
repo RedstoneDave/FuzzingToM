@@ -1,0 +1,7 @@
+{
+  "AskRate": 1.0,
+  "AskRate_by_difficulty": {
+    "N2_M0": 1.0,
+    "N1_M0": 1.0
+  }
+}
