@@ -27,23 +27,22 @@ class DataEntry(TypedDict):
 def pick_entry_with_knowns(entries: Sequence[DataEntry], n_missing: int, m_known: int) -> Tuple[DataEntry, List[KnownDetail]]:
     """
     Sample a datum whose total details are n_missing + m_known, then mark m_known as known (g_a analogue).
-    Returns the mutated entry (with only n_missing remaining) and the list of known details with chosen values.
+    Returns the mutated entry (with at least n_missing remaining) and the list of known details with chosen values.
     """
     candidates = [d for d in entries if len(d["missing_details"]) >= n_missing + m_known]
     if not candidates:
         raise ValueError("No entries have enough missing details for the requested split.")
     base = deepcopy(random.choice(candidates))
-    total_details = base["missing_details"]
-    chosen_known_idx = set(random.sample(range(len(total_details)), m_known)) if m_known else set()
-    known: List[KnownDetail] = []
-    remaining: List[Detail] = []
-    for idx, det in enumerate(total_details):
-        if idx in chosen_known_idx:
-            value = random.choice(det["options"]) if det["options"] else ""
-            known.append({"description": det["description"], "value": value, "source_detail": det})
-        else:
-            remaining.append(det)
-    base["missing_details"] = remaining[:n_missing]
+    total_details = base["missing_details"].copy()
+    random.shuffle(total_details)
+    known_raw: List[Detail] = total_details[:m_known]
+    known: List[KnownDetail] = [{
+        "description": det['description'],
+        "value": random.choice(det["options"]) if det["options"] else "",
+        "source_detail": det,
+    } for det in known_raw]
+    remaining: List[Detail] = total_details[m_known:]
+    base["missing_details"] = remaining
     base["vague"] = len(base["missing_details"]) > 0
     base["known_details"] = known
     return base, known
