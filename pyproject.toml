@@ -26,3 +26,6 @@ proactest = "proactest.cli:main"
 proactest-make-toy = "scripts.make_toy_dataset:main"
 proactest-download-in3 = "scripts.download_in3:main"
 proactest-convert-in3 = "scripts.convert_in3_to_proactest:main"
+
+[tool.setuptools]
+packages = ["scripts", "proactest", "data"]
