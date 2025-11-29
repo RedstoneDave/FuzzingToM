@@ -1,5 +1,5 @@
 import concurrent
-from concurrent.futures import as_completed
+from concurrent.futures import as_completed, ThreadPoolExecutor, Future
 from pathlib import Path
 import dotenv
 import json
@@ -21,22 +21,23 @@ You are an agent that proactivately interacts with users to gather all necessary
 2. Formulate clear and concise questions to gather the required details.
 3. Prioritize questions that address the most critical gaps in understanding.
 4. Maintain a polite and professional tone throughout the interaction.
-5. If all necessary information is gathered, summarize the user's request to confirm understanding before proceeding.
-When responding, only output one question you would ask the user to clarify their request, or if no questions are needed, output "No questions needed."
-Don't provide any additional commentary or explanations. Don't answer the questions yourself.
+5. If all necessary information is gathered, you should output "No questions needed".
+When responding, only output the questions you would ask the user to clarify their request, with each question a line. Or, if no questions are needed, output "No questions needed."
+Don't provide any additional commentary or explanations other than your clarifying questions.
+Don't answer the questions or complete the task yourself.
 '''
 
-def run_single_test(model: str, entry: DataEntry) -> int:
+def run_single_test(model: str, entry: DataEntry, index: int) -> tuple[str, int]:
     '''
     run a single test and return the result
     '''
     try:
         result_text = _get_response(model, entry)
         print('model response:', result_text)
-        return result_text
+        return result_text, index
     except Exception as e:
         print(f"Error during model response: {e}")
-        return "Error"
+        return "Error", index
 
 dotenv.load_dotenv()
 print(os.getenv("OPENAI_API_KEY", ""))
@@ -66,23 +67,33 @@ def run_test_on(model: str, data_dir: str | Path, output_dir: str | Path) -> Non
     output_dir.mkdir(parents=True, exist_ok=True)
     result = {}
     out_path = output_dir / f"test_results_{model.replace('/', '_').replace(':', '_')}.json"
-        
+    
+    with out_path.open("r") as original_file:
+        try:
+            result = json.load(original_file)
+        except json.JSONDecodeError:
+            result = {}
+    
     for n_missing in range(6):
         for m_known in range(6 - n_missing):
             in_path = data_dir / f"test_missing_{n_missing}_known_{m_known}.jsonl"
             if not in_path.exists():
                 continue
-            with in_path.open("r") as f_in, concurrent.futures.ThreadPoolExecutor() as executor:
-                futures = [executor.submit(run_single_test, model, json.loads(line)) for line in f_in]
-                for i, future in enumerate(as_completed(futures)):
-                    answer = future.result()
+            key = f"missing_{n_missing}_known_{m_known}"
+            if key not in result:
+                result[key] = []
+            with in_path.open("r") as f_in, ThreadPoolExecutor() as executor:
+                futures : list[Future] = []
+                for i, line in enumerate(f_in):
+                    if any(entry["index"] == i for entry in result[key]):
+                        continue
+                    futures.append(executor.submit(run_single_test, model, json.loads(line), i))
+                for future in as_completed(futures):
+                    answer, i = future.result()
                     result_entry = {
                         "index": i,
                         "answer": answer,
                     }
-                    key = f"missing_{n_missing}_known_{m_known}"
-                    if key not in result:
-                        result[key] = []
                     result[key].append(result_entry)
                     with out_path.open("w") as f_out:
                         json.dump(result, f_out, indent=2)
